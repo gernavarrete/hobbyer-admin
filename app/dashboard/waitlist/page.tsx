@@ -18,7 +18,7 @@ export default function WaitlistPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/api/v1/admin/waitlist?limit=50')
+    api.get('/api/admin/waitlist?limit=50')
       .then(res => {
         setData(res.data.data)
         setTotal(res.data.total)

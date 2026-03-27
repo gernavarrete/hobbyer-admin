@@ -23,7 +23,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/api/v1/admin/overview')
+    api.get('/api/admin/overview')
       .then(res => setData(res.data))
       .catch(console.error)
       .finally(() => setLoading(false))
