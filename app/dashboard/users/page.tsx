@@ -2,6 +2,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
+import TableSkeleton from '@/components/TableSkeleton'
+import ErrorState from '@/components/ErrorState'
 
 interface AppUser {
   id: string
@@ -23,6 +25,7 @@ export default function UsersPage() {
   const [data, setData] = useState<AppUser[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [search, setSearch] = useState('')
   const [offset, setOffset] = useState(0)
   const limit = 50
@@ -30,6 +33,7 @@ export default function UsersPage() {
 
   const fetchUsers = (s: string, o: number) => {
     setLoading(true)
+    setError(false)
     const params = new URLSearchParams({ limit: String(limit), offset: String(o) })
     if (s) params.set('search', s)
     api.get(`/admin/users?${params}`)
@@ -37,7 +41,7 @@ export default function UsersPage() {
         setData(res.data.data)
         setTotal(res.data.total)
       })
-      .catch(console.error)
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }
 
@@ -74,7 +78,9 @@ export default function UsersPage() {
       </div>
 
       {loading ? (
-        <p className="text-slate-400">Cargando...</p>
+        <TableSkeleton rows={8} cols={6} />
+      ) : error ? (
+        <ErrorState message="Error al cargar usuarios" onRetry={() => fetchUsers(search, offset)} />
       ) : (
         <>
           <div className="bg-[#1b212d] rounded-2xl border border-[#252b3b] overflow-hidden">

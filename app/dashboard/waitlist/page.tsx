@@ -1,6 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import TableSkeleton from '@/components/TableSkeleton'
+import ErrorState from '@/components/ErrorState'
+import Toast from '@/components/Toast'
+import useToast from '@/hooks/useToast'
 
 interface Subscriber {
   id: string
@@ -17,23 +21,20 @@ export default function WaitlistPage() {
   const [data, setData] = useState<Subscriber[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [sending, setSending] = useState<string | 'all' | null>(null)
-  const [toast, setToast] = useState<string | null>(null)
-
-  const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 3500)
-  }
+  const { toast, showSuccess, showError, hide } = useToast()
 
   const fetchData = () => {
     setLoading(true)
+    setError(false)
     api.get('/admin/waitlist?limit=100')
       .then(res => {
         setData(res.data.data)
         setTotal(res.data.total)
       })
-      .catch(console.error)
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }
 
@@ -59,11 +60,11 @@ export default function WaitlistPage() {
     setSending('selected')
     try {
       const res = await api.post('/admin/waitlist/invite', { ids: Array.from(selected) })
-      showToast(`${res.data.invited} invitaciones enviadas`)
+      showSuccess(`${res.data.invited} invitaciones enviadas`)
       setSelected(new Set())
       fetchData()
     } catch {
-      showToast('Error al enviar invitaciones')
+      showError('Error al enviar invitaciones')
     } finally {
       setSending(null)
     }
@@ -73,10 +74,10 @@ export default function WaitlistPage() {
     setSending(id)
     try {
       await api.post('/admin/waitlist/invite', { ids: [id] })
-      showToast('Invitacion enviada')
+      showSuccess('Invitación enviada')
       fetchData()
     } catch {
-      showToast('Error al enviar invitacion')
+      showError('Error al enviar invitación')
     } finally {
       setSending(null)
     }
@@ -86,10 +87,10 @@ export default function WaitlistPage() {
     setSending('all')
     try {
       const res = await api.post('/admin/waitlist/invite-all', {})
-      showToast(`${res.data.invited} invitaciones enviadas`)
+      showSuccess(`${res.data.invited} invitaciones enviadas`)
       fetchData()
     } catch {
-      showToast('Error al enviar invitaciones')
+      showError('Error al enviar invitaciones')
     } finally {
       setSending(null)
     }
@@ -99,13 +100,7 @@ export default function WaitlistPage() {
 
   return (
     <div className="p-8">
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-6 right-6 z-50 bg-[#1b212d] border border-[#252b3b]
-          text-white px-5 py-3 rounded-xl shadow-xl text-sm font-medium">
-          {toast}
-        </div>
-      )}
+      <Toast message={toast.message} type={toast.type} visible={toast.visible} onClose={hide} />
 
       <div className="mb-8 flex items-center justify-between">
         <div>
@@ -135,7 +130,9 @@ export default function WaitlistPage() {
       </div>
 
       {loading ? (
-        <p className="text-slate-400">Cargando...</p>
+        <TableSkeleton rows={8} cols={7} />
+      ) : error ? (
+        <ErrorState message="Error al cargar waitlist" onRetry={fetchData} />
       ) : (
         <div className="bg-[#1b212d] rounded-2xl border border-[#252b3b] overflow-hidden">
           <table className="w-full text-sm">

@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import MetricCard from '@/components/MetricCard'
+import TableSkeleton from '@/components/TableSkeleton'
+import ErrorState from '@/components/ErrorState'
 import api from '@/lib/api'
 
 interface Overview {
@@ -21,20 +23,40 @@ interface Overview {
 export default function DashboardPage() {
   const [data, setData] = useState<Overview | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
-  useEffect(() => {
+  const fetchData = () => {
+    setLoading(true)
+    setError(false)
     api.get('/admin/overview')
       .then(res => setData(res.data))
-      .catch(console.error)
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(() => { fetchData() }, [])
 
   if (loading) return (
-    <div className="p-8 text-slate-400">Cargando métricas...</div>
+    <div className="p-8">
+      <div className="mb-8">
+        <div className="h-8 w-32 bg-[#252b3b] rounded animate-pulse mb-2" />
+        <div className="h-4 w-48 bg-[#252b3b] rounded animate-pulse" />
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="bg-[#1b212d] rounded-2xl border border-[#252b3b] p-6">
+            <div className="h-3 w-20 bg-[#252b3b] rounded animate-pulse mb-4" />
+            <div className="h-10 w-16 bg-[#252b3b] rounded animate-pulse" />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 
-  if (!data) return (
-    <div className="p-8 text-red-400">Error al cargar métricas.</div>
+  if (error || !data) return (
+    <div className="p-8">
+      <ErrorState message="Error al cargar métricas" onRetry={fetchData} />
+    </div>
   )
 
   return (

@@ -2,6 +2,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import api from '@/lib/api'
+import TableSkeleton from '@/components/TableSkeleton'
+import ErrorState from '@/components/ErrorState'
+import Toast from '@/components/Toast'
+import useToast from '@/hooks/useToast'
 
 interface UserDetail {
   id: string
@@ -45,18 +49,16 @@ export default function UserDetailPage() {
   const [user, setUser] = useState<UserDetail | null>(null)
   const [actions, setActions] = useState<AdminAction[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [acting, setActing] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
-
-  const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 3500)
-  }
+  const { toast, showSuccess, showError, hide } = useToast()
 
   const fetchUser = () => {
+    setLoading(true)
+    setError(false)
     api.get(`/admin/users/${id}`)
       .then(res => setUser(res.data))
-      .catch(console.error)
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }
 
@@ -75,29 +77,40 @@ export default function UserDetailPage() {
     setActing(true)
     try {
       await api.patch(`/admin/users/${id}/status`, { status, note: `Cambio manual a ${status}` })
-      showToast(`Estado cambiado a ${status}`)
+      showSuccess(`Estado cambiado a ${status}`)
       fetchUser()
       fetchActions()
     } catch {
-      showToast('Error al cambiar estado')
+      showError('Error al cambiar estado')
     } finally {
       setActing(false)
     }
   }
 
-  if (loading) return <div className="p-8 text-slate-400">Cargando...</div>
-  if (!user) return <div className="p-8 text-red-400">Usuario no encontrado</div>
+  if (loading) return (
+    <div className="p-8 max-w-4xl">
+      <div className="flex items-start gap-5 mb-8">
+        <div className="w-20 h-20 rounded-2xl bg-[#252b3b] animate-pulse" />
+        <div className="flex-1">
+          <div className="h-8 w-48 bg-[#252b3b] rounded animate-pulse mb-2" />
+          <div className="h-4 w-32 bg-[#252b3b] rounded animate-pulse" />
+        </div>
+      </div>
+      <TableSkeleton rows={3} cols={3} />
+    </div>
+  )
+
+  if (error || !user) return (
+    <div className="p-8">
+      <ErrorState message="Usuario no encontrado" onRetry={fetchUser} />
+    </div>
+  )
 
   const initial = (user.name || '?')[0].toUpperCase()
 
   return (
     <div className="p-8 max-w-4xl">
-      {toast && (
-        <div className="fixed top-6 right-6 z-50 bg-[#1b212d] border border-[#252b3b]
-          text-white px-5 py-3 rounded-xl shadow-xl text-sm font-medium">
-          {toast}
-        </div>
-      )}
+      <Toast message={toast.message} type={toast.type} visible={toast.visible} onClose={hide} />
 
       {/* Header */}
       <div className="flex items-start gap-5 mb-8">
@@ -162,7 +175,7 @@ export default function UserDetailPage() {
       {/* Moderation Actions */}
       <div className="mb-8">
         <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">
-          Acciones de moderacion
+          Acciones de moderación
         </h3>
         <div className="flex gap-3">
           {user.status !== 'active' && (
@@ -200,7 +213,7 @@ export default function UserDetailPage() {
               <thead>
                 <tr className="border-b border-[#252b3b]">
                   <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase">Admin</th>
-                  <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase">Accion</th>
+                  <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase">Acción</th>
                   <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase">Nota</th>
                   <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase">Fecha</th>
                 </tr>

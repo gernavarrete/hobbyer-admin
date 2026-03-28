@@ -9,15 +9,48 @@ import {
   Shield,
   ScrollText,
   LogOut,
+  Settings,
+  BarChart3,
+  Compass,
+  Handshake,
 } from 'lucide-react'
 
-const navItems = [
-  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { href: '/dashboard/waitlist', label: 'Waitlist', icon: ListChecks },
-  { href: '/dashboard/users', label: 'Usuarios', icon: Users },
-  { href: '/dashboard/moderation', label: 'Moderacion', icon: Shield },
-  { href: '/dashboard/groups', label: 'Grupos', icon: Users2 },
-  { href: '/dashboard/audit-log', label: 'Audit Log', icon: ScrollText },
+const sections = [
+  {
+    label: 'Principal',
+    items: [
+      { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'Usuarios',
+    items: [
+      { href: '/dashboard/waitlist', label: 'Waitlist', icon: ListChecks },
+      { href: '/dashboard/users', label: 'Usuarios', icon: Users },
+      { href: '/dashboard/moderation', label: 'Moderación', icon: Shield },
+    ],
+  },
+  {
+    label: 'Contenido',
+    items: [
+      { href: '/dashboard/groups', label: 'Grupos', icon: Users2 },
+      { href: '/dashboard/partners', label: 'Partners', icon: Handshake },
+      { href: '/dashboard/discovery', label: 'Discovery', icon: Compass },
+    ],
+  },
+  {
+    label: 'Datos',
+    items: [
+      { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
+      { href: '/dashboard/audit-log', label: 'Audit Log', icon: ScrollText },
+    ],
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { href: '/dashboard/config', label: 'Configuración', icon: Settings },
+    ],
+  },
 ]
 
 export default function Sidebar() {
@@ -37,27 +70,34 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive = item.href === '/dashboard'
-            ? pathname === '/dashboard'
-            : pathname.startsWith(item.href)
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all
-                ${isActive
-                  ? 'bg-[#0d59f2] text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-[#1b212d]'
-                }`}
-            >
-              <Icon size={18} />
-              {item.label}
-            </Link>
-          )
-        })}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {sections.map((section) => (
+          <div key={section.label} className="mb-3">
+            <p className="px-4 py-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+              {section.label}
+            </p>
+            {section.items.map((item) => {
+              const Icon = item.icon
+              const isActive = item.href === '/dashboard'
+                ? pathname === '/dashboard'
+                : pathname.startsWith(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all
+                    ${isActive
+                      ? 'bg-[#0d59f2] text-white'
+                      : 'text-slate-400 hover:text-white hover:bg-[#1b212d]'
+                    }`}
+                >
+                  <Icon size={18} />
+                  {item.label}
+                </Link>
+              )
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* Logout */}

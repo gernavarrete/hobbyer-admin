@@ -1,6 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import TableSkeleton from '@/components/TableSkeleton'
+import ErrorState from '@/components/ErrorState'
+import Toast from '@/components/Toast'
+import useToast from '@/hooks/useToast'
 
 interface Report {
   id: string
@@ -23,6 +27,7 @@ export default function ModerationPage() {
   const [reports, setReports] = useState<Report[]>([])
   const [reportsTotal, setReportsTotal] = useState(0)
   const [loadingReports, setLoadingReports] = useState(true)
+  const [errorReports, setErrorReports] = useState(false)
 
   // Quick actions
   const [searchEmail, setSearchEmail] = useState('')
@@ -34,20 +39,17 @@ export default function ModerationPage() {
   const [modalNote, setModalNote] = useState('')
   const [acting, setActing] = useState(false)
 
-  const [toast, setToast] = useState<string | null>(null)
-  const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 3500)
-  }
+  const { toast, showSuccess, showError, hide } = useToast()
 
   const fetchReports = () => {
     setLoadingReports(true)
+    setErrorReports(false)
     api.get('/admin/reports?limit=20&status=pending')
       .then(res => {
         setReports(res.data.data)
         setReportsTotal(res.data.total)
       })
-      .catch(() => { setReports([]); setReportsTotal(0) })
+      .catch(() => setErrorReports(true))
       .finally(() => setLoadingReports(false))
   }
 
@@ -61,12 +63,12 @@ export default function ModerationPage() {
         action: modal.action,
         note: modalNote,
       })
-      showToast('Reporte resuelto')
+      showSuccess('Reporte resuelto')
       setModal(null)
       setModalNote('')
       fetchReports()
     } catch {
-      showToast('Error al resolver reporte')
+      showError('Error al resolver reporte')
     } finally {
       setActing(false)
     }
@@ -85,12 +87,12 @@ export default function ModerationPage() {
     try {
       await api.patch(`/admin/users/${userId}/status`, {
         status,
-        note: `Accion rapida desde moderacion`,
+        note: `Acción rápida desde moderación`,
       })
-      showToast(`Usuario actualizado a ${status}`)
+      showSuccess(`Usuario actualizado a ${status}`)
       searchUser()
     } catch {
-      showToast('Error al actualizar usuario')
+      showError('Error al actualizar usuario')
     }
   }
 
@@ -110,12 +112,7 @@ export default function ModerationPage() {
 
   return (
     <div className="p-8">
-      {toast && (
-        <div className="fixed top-6 right-6 z-50 bg-[#1b212d] border border-[#252b3b]
-          text-white px-5 py-3 rounded-xl shadow-xl text-sm font-medium">
-          {toast}
-        </div>
-      )}
+      <Toast message={toast.message} type={toast.type} visible={toast.visible} onClose={hide} />
 
       {/* Modal */}
       {modal && (
@@ -148,7 +145,7 @@ export default function ModerationPage() {
       )}
 
       <div className="mb-8">
-        <h2 className="text-2xl font-extrabold text-white tracking-tight">Moderacion</h2>
+        <h2 className="text-2xl font-extrabold text-white tracking-tight">Moderación</h2>
         <p className="text-slate-400 mt-1 text-sm">Gestionar reportes y acciones sobre usuarios</p>
       </div>
 
@@ -158,7 +155,7 @@ export default function ModerationPage() {
           Reportes ({reportsTotal})
         </button>
         <button onClick={() => setTab('quick')} className={tabClass('quick')}>
-          Acciones rapidas
+          Acciones rápidas
         </button>
       </div>
 
@@ -166,11 +163,13 @@ export default function ModerationPage() {
       {tab === 'reports' && (
         <>
           {loadingReports ? (
-            <p className="text-slate-400">Cargando...</p>
+            <TableSkeleton rows={5} cols={5} />
+          ) : errorReports ? (
+            <ErrorState message="Error al cargar reportes" onRetry={fetchReports} />
           ) : reports.length === 0 ? (
             <div className="bg-[#1b212d] rounded-2xl border border-[#252b3b] p-12 text-center">
               <p className="text-slate-400 text-lg font-medium">Sin reportes pendientes</p>
-              <p className="text-slate-500 text-sm mt-1">No hay reportes que requieran atencion</p>
+              <p className="text-slate-500 text-sm mt-1">No hay reportes que requieran atención</p>
             </div>
           ) : (
             <div className="bg-[#1b212d] rounded-2xl border border-[#252b3b] overflow-hidden">

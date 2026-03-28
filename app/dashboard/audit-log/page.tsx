@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import TableSkeleton from '@/components/TableSkeleton'
+import ErrorState from '@/components/ErrorState'
 
 interface AuditEntry {
   id: string
@@ -26,17 +28,19 @@ export default function AuditLogPage() {
   const [data, setData] = useState<AuditEntry[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [offset, setOffset] = useState(0)
   const limit = 50
 
   const fetchLog = (o: number) => {
     setLoading(true)
+    setError(false)
     api.get(`/admin/audit-log?limit=${limit}&offset=${o}`)
       .then(res => {
         setData(res.data.data)
         setTotal(res.data.total)
       })
-      .catch(() => { setData([]); setTotal(0) })
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }
 
@@ -50,7 +54,9 @@ export default function AuditLogPage() {
       </div>
 
       {loading ? (
-        <p className="text-slate-400">Cargando...</p>
+        <TableSkeleton rows={8} cols={5} />
+      ) : error ? (
+        <ErrorState message="Error al cargar audit log" onRetry={() => fetchLog(offset)} />
       ) : data.length === 0 ? (
         <div className="bg-[#1b212d] rounded-2xl border border-[#252b3b] p-12 text-center">
           <p className="text-slate-400 text-lg font-medium">Sin acciones registradas</p>
@@ -62,7 +68,7 @@ export default function AuditLogPage() {
               <thead>
                 <tr className="border-b border-[#252b3b]">
                   <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Admin</th>
-                  <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Accion</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Acción</th>
                   <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Usuario</th>
                   <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Nota</th>
                   <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
