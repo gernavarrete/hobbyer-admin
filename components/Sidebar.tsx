@@ -4,7 +4,10 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Users,
+  Users2,
   ListChecks,
+  Shield,
+  ScrollText,
   LogOut,
 } from 'lucide-react'
 
@@ -12,6 +15,9 @@ const navItems = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/dashboard/waitlist', label: 'Waitlist', icon: ListChecks },
   { href: '/dashboard/users', label: 'Usuarios', icon: Users },
+  { href: '/dashboard/moderation', label: 'Moderacion', icon: Shield },
+  { href: '/dashboard/groups', label: 'Grupos', icon: Users2 },
+  { href: '/dashboard/audit-log', label: 'Audit Log', icon: ScrollText },
 ]
 
 export default function Sidebar() {
@@ -34,7 +40,9 @@ export default function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href
+          const isActive = item.href === '/dashboard'
+            ? pathname === '/dashboard'
+            : pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}
