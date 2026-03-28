@@ -10,9 +10,7 @@ async function handler(req: NextRequest, ctx: Context) {
     const search = req.nextUrl.search ?? ''
     const url = `${BACKEND}/api/v1/${path.join('/')}${search}`
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
+    const headers: Record<string, string> = {}
     const auth = req.headers.get('Authorization')
     if (auth) headers['Authorization'] = auth
 
@@ -27,16 +25,25 @@ async function handler(req: NextRequest, ctx: Context) {
       body,
     })
 
-    const data = await backendRes.text()
-    return new NextResponse(data, {
+    // Leer como buffer para evitar problemas de encoding
+    const buffer = await backendRes.arrayBuffer()
+    const text = Buffer.from(buffer).toString('utf-8')
+
+    return new NextResponse(text, {
       status: backendRes.status,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+      },
     })
   } catch (err) {
-    console.error('[proxy] error:', err)
-    return NextResponse.json(
-      { error: 'Proxy error', detail: String(err) },
-      { status: 500 }
+    console.error('[proxy] error:', String(err))
+    return new NextResponse(
+      JSON.stringify({ error: 'Proxy error', detail: String(err) }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
     )
   }
 }
