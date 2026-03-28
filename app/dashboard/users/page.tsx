@@ -16,7 +16,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/api/admin/users?limit=50')
+    api.get('/admin/users?limit=50')
       .then(res => {
         setData(res.data.data)
         setTotal(res.data.total)
