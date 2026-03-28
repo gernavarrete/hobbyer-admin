@@ -9,6 +9,7 @@ interface Subscriber {
   hobby: string | null
   source: string
   status: string
+  invited_at: string | null
   created_at: string
 }
 
@@ -16,27 +17,120 @@ export default function WaitlistPage() {
   const [data, setData] = useState<Subscriber[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [sending, setSending] = useState<string | 'all' | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
 
-  useEffect(() => {
-    api.get('/admin/waitlist?limit=50')
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3500)
+  }
+
+  const fetchData = () => {
+    setLoading(true)
+    api.get('/admin/waitlist?limit=100')
       .then(res => {
         setData(res.data.data)
         setTotal(res.data.total)
       })
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(() => { fetchData() }, [])
+
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const toggleAll = () => {
+    const uninvited = data.filter(r => !r.invited_at).map(r => r.id)
+    setSelected(prev =>
+      prev.size === uninvited.length ? new Set() : new Set(uninvited)
+    )
+  }
+
+  const inviteSelected = async () => {
+    if (selected.size === 0) return
+    setSending('selected')
+    try {
+      const res = await api.post('/admin/waitlist/invite', { ids: Array.from(selected) })
+      showToast(`${res.data.invited} invitaciones enviadas`)
+      setSelected(new Set())
+      fetchData()
+    } catch {
+      showToast('Error al enviar invitaciones')
+    } finally {
+      setSending(null)
+    }
+  }
+
+  const inviteOne = async (id: string) => {
+    setSending(id)
+    try {
+      await api.post('/admin/waitlist/invite', { ids: [id] })
+      showToast('Invitacion enviada')
+      fetchData()
+    } catch {
+      showToast('Error al enviar invitacion')
+    } finally {
+      setSending(null)
+    }
+  }
+
+  const inviteAll = async () => {
+    setSending('all')
+    try {
+      const res = await api.post('/admin/waitlist/invite-all', {})
+      showToast(`${res.data.invited} invitaciones enviadas`)
+      fetchData()
+    } catch {
+      showToast('Error al enviar invitaciones')
+    } finally {
+      setSending(null)
+    }
+  }
+
+  const uninvitedCount = data.filter(r => !r.invited_at).length
 
   return (
     <div className="p-8">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-50 bg-[#1b212d] border border-[#252b3b]
+          text-white px-5 py-3 rounded-xl shadow-xl text-sm font-medium">
+          {toast}
+        </div>
+      )}
+
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-white tracking-tight">
-            Waitlist
-          </h2>
-          <p className="text-slate-400 mt-1 text-sm">
-            {total} registros totales
-          </p>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">Waitlist</h2>
+          <p className="text-slate-400 mt-1 text-sm">{total} registros — {uninvitedCount} sin invitar</p>
+        </div>
+        <div className="flex gap-3">
+          {selected.size > 0 && (
+            <button
+              onClick={inviteSelected}
+              disabled={sending !== null}
+              className="px-4 py-2 rounded-xl bg-[#0d59f2] text-white text-sm font-semibold
+                hover:bg-blue-600 disabled:opacity-50 transition-all"
+            >
+              {sending === 'selected' ? 'Enviando...' : `Invitar seleccionados (${selected.size})`}
+            </button>
+          )}
+          <button
+            onClick={inviteAll}
+            disabled={sending !== null || uninvitedCount === 0}
+            className="px-4 py-2 rounded-xl bg-[#FF6B00] text-white text-sm font-semibold
+              hover:bg-orange-600 disabled:opacity-50 transition-all"
+          >
+            {sending === 'all' ? 'Enviando...' : `Invitar todos (${uninvitedCount})`}
+          </button>
         </div>
       </div>
 
@@ -47,52 +141,72 @@ export default function WaitlistPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#252b3b]">
-                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Nombre
+                <th className="px-6 py-4">
+                  <input
+                    type="checkbox"
+                    checked={selected.size === uninvitedCount && uninvitedCount > 0}
+                    onChange={toggleAll}
+                    className="accent-[#0d59f2]"
+                  />
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Hobby
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Fuente
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Fecha
-                </th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Nombre</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Hobby</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Fuente</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Estado</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
+                <th className="px-6 py-4"></th>
               </tr>
             </thead>
             <tbody>
-              {data.map((row, i) => (
+              {data.map((row) => (
                 <tr
                   key={row.id}
                   className={`border-b border-[#252b3b]/50 hover:bg-[#252b3b]/50 transition-colors
-                    ${i % 2 === 0 ? '' : 'bg-[#252b3b]/20'}`}
+                    ${selected.has(row.id) ? 'bg-[#0d59f2]/10' : ''}`}
                 >
-                  <td className="px-6 py-4 text-white font-medium">
-                    {row.name || '—'}
+                  <td className="px-6 py-4">
+                    {!row.invited_at && (
+                      <input
+                        type="checkbox"
+                        checked={selected.has(row.id)}
+                        onChange={() => toggleSelect(row.id)}
+                        className="accent-[#0d59f2]"
+                      />
+                    )}
                   </td>
-                  <td className="px-6 py-4 text-slate-300">
-                    {row.email}
+                  <td className="px-6 py-4 text-white font-medium">{row.name ?? '—'}</td>
+                  <td className="px-6 py-4 text-slate-300">{row.email}</td>
+                  <td className="px-6 py-4 text-slate-400">{row.hobby ?? '—'}</td>
+                  <td className="px-6 py-4 text-slate-400">{row.source}</td>
+                  <td className="px-6 py-4">
+                    {row.invited_at ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                        bg-green-500/10 text-green-400 text-xs font-semibold">
+                        Invitado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                        bg-slate-500/10 text-slate-400 text-xs font-semibold">
+                        Pendiente
+                      </span>
+                    )}
                   </td>
-                  <td className="px-6 py-4 text-slate-300">
-                    {row.hobby || '—'}
+                  <td className="px-6 py-4 text-slate-400">
+                    {new Date(row.created_at).toLocaleDateString('es-AR')}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-2 py-1 rounded-full text-xs font-bold bg-[#0d59f2]/10 text-[#0d59f2]">
-                      {row.source}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-400 text-xs">
-                    {new Date(row.created_at).toLocaleDateString('es-AR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {!row.invited_at && (
+                      <button
+                        onClick={() => inviteOne(row.id)}
+                        disabled={sending !== null}
+                        className="px-3 py-1.5 rounded-lg bg-[#0d59f2]/20 text-[#0d59f2]
+                          text-xs font-semibold hover:bg-[#0d59f2]/30 disabled:opacity-50
+                          transition-all whitespace-nowrap"
+                      >
+                        {sending === row.id ? '...' : 'Invitar'}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
