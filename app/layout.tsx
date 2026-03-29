@@ -17,9 +17,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="dark">
-      <head>
-        <link rel="icon" href="/hobbyer-admin-favicon.svg" type="image/svg+xml" />
-      </head>
       <body className={`${inter.className} bg-[#101622] text-slate-100 antialiased`}>
         {children}
       </body>
