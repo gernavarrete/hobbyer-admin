@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: 'Hobbyer Admin',
   description: 'Panel de administración de Hobbyer',
   robots: 'noindex, nofollow',
+  icons: {
+    icon: '/hobbyer-admin-favicon.svg',
+  },
 }
 
 export default function RootLayout({
