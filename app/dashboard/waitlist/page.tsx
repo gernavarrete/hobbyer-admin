@@ -13,6 +13,7 @@ interface Subscriber {
   hobby: string | null
   source: string
   status: string
+  platform: 'android' | 'ios' | null
   invited_at: string | null
   created_at: string
 }
@@ -150,6 +151,7 @@ export default function WaitlistPage() {
                 <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email</th>
                 <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Hobby</th>
                 <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Fuente</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Plataforma</th>
                 <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Estado</th>
                 <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
                 <th className="px-6 py-4"></th>
@@ -176,6 +178,21 @@ export default function WaitlistPage() {
                   <td className="px-6 py-4 text-slate-300">{row.email}</td>
                   <td className="px-6 py-4 text-slate-400">{row.hobby ?? '—'}</td>
                   <td className="px-6 py-4 text-slate-400">{row.source}</td>
+                  <td className="px-6 py-4">
+                    {row.platform === 'android' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                        bg-green-500/10 text-green-400 text-xs font-semibold">
+                        Android
+                      </span>
+                    ) : row.platform === 'ios' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                        bg-slate-500/10 text-slate-300 text-xs font-semibold">
+                        iOS
+                      </span>
+                    ) : (
+                      <span className="text-slate-600 text-xs">—</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4">
                     {row.invited_at ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
