@@ -14,9 +14,13 @@ import {
   Compass,
   Handshake,
   CreditCard,
+  Bell,
+  Activity,
+  ShieldCheck,
 } from 'lucide-react'
+import { useAdminRole } from '@/hooks/useAdminRole'
 
-const sections = [
+const BASE_SECTIONS = [
   {
     label: 'Principal',
     items: [
@@ -50,6 +54,8 @@ const sections = [
   {
     label: 'Sistema',
     items: [
+      { href: '/dashboard/broadcast', label: 'Notificaciones', icon: Bell },
+      { href: '/dashboard/system', label: 'Sistema', icon: Activity },
       { href: '/dashboard/config', label: 'Configuración', icon: Settings },
     ],
   },
@@ -57,6 +63,18 @@ const sections = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const role = useAdminRole()
+
+  const sections = BASE_SECTIONS.map(section => {
+    if (section.label !== 'Sistema') return section
+    const items = [
+      ...section.items,
+      ...(role === 'superadmin'
+        ? [{ href: '/dashboard/roles', label: 'Roles', icon: ShieldCheck }]
+        : []),
+    ]
+    return { ...section, items }
+  })
 
   return (
     <aside className="w-64 min-h-screen bg-[#0c111a] border-r border-[#1b212d] flex flex-col">

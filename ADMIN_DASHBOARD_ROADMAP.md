@@ -189,21 +189,21 @@ Los roles se implementan como **Cognito Custom Attributes** (`custom:admin_role`
 
 ---
 
-## Sprint G — Notificaciones, Feature Flags & Config (Semana 11)
+## Sprint G ✅ — Notificaciones, Feature Flags & Config (Semana 11)
 
 ### Objetivo: Herramientas operativas para el equipo
 
 ### Backend (FastAPI)
-- [ ] **G.1** Tabla `feature_flags` (key, value, description, updated_by, updated_at)
+- [x] **G.1** Tabla `feature_flags` (key, value, description, updated_by, updated_at, created_at) — migración en run_migrations.py
 - [x] **G.2** Endpoint `GET/PUT /admin/feature-flags` — controlar features en producción sin deploy
-- [ ] **G.3** Endpoint `POST /admin/notifications/broadcast` — enviar push notification a segmento de usuarios
+- [x] **G.3** Endpoint `POST /admin/notifications/broadcast` — enviar push notification a segmento de usuarios
 - [x] **G.4** Endpoint `GET /admin/system/health` — estado de EC2, RDS, conexiones activas
 
 ### Frontend (Next.js)
 - [x] **G.5** `FeatureFlagsPage` — lista de flags con toggle switch, descripción y último editor (`config/page.tsx`)
-- [ ] **G.6** `BroadcastPage` — formulario para enviar push a: todos / usuarios premium / por hobby / por ciudad
-- [ ] **G.7** `SystemHealthPage` — estado de servicios, latencia de DB, errores 5xx últimas 24hs (CloudWatch)
-- [ ] **G.8** `RolesPage` — lista de admins con su rol, opción de cambiar rol o revocar acceso (solo superadmin)
+- [x] **G.6** `BroadcastPage` — formulario para enviar push a: todos / usuarios premium / por hobby / por ciudad
+- [x] **G.7** `SystemHealthPage` — estado de servicios, latencia de endpoints críticos, polling 30s
+- [x] **G.8** `RolesPage` — lista de admins con su rol, opción de cambiar rol o revocar acceso (solo superadmin)
 
 ---
 

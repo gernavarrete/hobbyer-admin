@@ -16,6 +16,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/analytics': 'Analytics',
   '/dashboard/audit-log': 'Audit Log',
   '/dashboard/config': 'Configuración',
+  '/dashboard/broadcast': 'Notificaciones',
+  '/dashboard/system': 'Sistema',
+  '/dashboard/roles': 'Roles',
 }
 
 function getPageTitle(pathname: string): string {
