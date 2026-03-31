@@ -13,6 +13,7 @@ import {
   BarChart3,
   Compass,
   Handshake,
+  CreditCard,
 } from 'lucide-react'
 
 const sections = [
@@ -35,6 +36,7 @@ const sections = [
     items: [
       { href: '/dashboard/groups', label: 'Grupos', icon: Users2 },
       { href: '/dashboard/partners', label: 'Partners', icon: Handshake },
+      { href: '/dashboard/subscriptions', label: 'Suscripciones', icon: CreditCard },
       { href: '/dashboard/discovery', label: 'Discovery', icon: Compass },
     ],
   },

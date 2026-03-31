@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import TableSkeleton from '@/components/TableSkeleton'
 import ErrorState from '@/components/ErrorState'
+import NewPartnerModal from '@/components/NewPartnerModal'
+import { useAdminRole } from '@/hooks/useAdminRole'
 
 interface Partner {
   id: string
@@ -15,11 +17,13 @@ interface Partner {
 
 export default function PartnersPage() {
   const router = useRouter()
+  const role = useAdminRole()
   const [data, setData] = useState<Partner[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [offset, setOffset] = useState(0)
+  const [showModal, setShowModal] = useState(false)
   const limit = 20
 
   const fetchPartners = (o: number) => {
@@ -38,9 +42,27 @@ export default function PartnersPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h2 className="text-2xl font-extrabold text-white tracking-tight">Partners</h2>
-        <p className="text-slate-400 mt-1 text-sm">{total} partners registrados</p>
+      {showModal && (
+        <NewPartnerModal
+          onClose={() => setShowModal(false)}
+          onSuccess={() => fetchPartners(0)}
+        />
+      )}
+
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">Partners</h2>
+          <p className="text-slate-400 mt-1 text-sm">{total} partners registrados</p>
+        </div>
+        {role !== 'support' && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-5 py-2.5 rounded-xl bg-[#0d59f2] text-white text-sm font-semibold
+              hover:bg-blue-600 transition-all"
+          >
+            + Nuevo partner
+          </button>
+        )}
       </div>
 
       {loading ? (
