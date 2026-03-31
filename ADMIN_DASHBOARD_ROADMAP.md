@@ -117,29 +117,29 @@ Los roles se implementan como **Cognito Custom Attributes** (`custom:admin_role`
 
 ---
 
-## Sprint D — Partners & Membresías (Semanas 6–7)
+## Sprint D ✅ — Partners & Membresías (Semanas 6–7)
 
 ### Objetivo: CRM básico para el modelo B2B de partners
 
 ### Base de datos (nuevas tablas)
-- [ ] **D.1** Migración Alembic: tabla `partner_subscriptions` (partner_id, plan, price, status, started_at, expires_at)
-- [ ] **D.2** Migración Alembic: tabla `partner_contacts` (partner_id, name, email, phone, role)
+- [x] **D.1** Migración run_migrations.py: tabla `partner_subscriptions` (partner_id, plan, price, status, started_at, expires_at)
+- [x] **D.2** Migración run_migrations.py: tabla `partner_contacts` (partner_id, name, email, phone, role)
 
 ### Backend (FastAPI)
 - [x] **D.3** Endpoint `GET /admin/partners` — listado con plan activo, fecha vencimiento, rating
 - [x] **D.4** Endpoint `GET /admin/partners/:id` — detalle: datos del negocio, contactos, suscripción, historial de ofertas
-- [ ] **D.5** Endpoint `POST /admin/partners` — alta manual de partner (para el equipo de ventas)
-- [ ] **D.6** Endpoint `PATCH /admin/partners/:id` — editar datos, cambiar plan, suspender
-- [ ] **D.7** Endpoint `GET /admin/partners/:id/performance` — views, clicks, redenciones de oferta del partner
-- [ ] **D.8** Endpoint `GET /admin/subscriptions` — listado global de suscripciones (activas, por vencer, vencidas)
+- [x] **D.5** Endpoint `POST /admin/partners` — alta manual de partner (para el equipo de ventas)
+- [x] **D.6** Endpoint `PATCH /admin/partners/:id` — editar datos, cambiar plan, suspender
+- [x] **D.7** Endpoint `GET /admin/partners/:id/performance` — views, clicks, redenciones de oferta del partner
+- [x] **D.8** Endpoint `GET /admin/subscriptions` — listado global de suscripciones (activas, por vencer, vencidas)
 
 ### Frontend (Next.js)
 - [x] **D.9** `PartnersPage` — tabla con badge de plan, estado de suscripción, próximo vencimiento
 - [x] **D.10** `PartnerDetailPage` — datos del negocio, contactos, tab de performance (views, clicks, redenciones)
-- [ ] **D.11** `PartnerDetailPage` — tab suscripción: plan activo, historial de pagos, renovar/suspender
-- [ ] **D.12** Modal "Nuevo partner" — formulario con validación Zod para alta manual
-- [ ] **D.13** `SubscriptionsPage` — lista global con alertas de próximos vencimientos (próximos 7 días resaltados)
-- [ ] **D.14** Email automático de renovación (SES o SendGrid) — configurar desde este panel
+- [x] **D.11** `PartnerDetailPage` — tab suscripción: plan activo, historial de pagos, renovar/suspender
+- [x] **D.12** Modal "Nuevo partner" — formulario con validación Zod para alta manual
+- [x] **D.13** `SubscriptionsPage` — lista global con alertas de próximos vencimientos (próximos 7 días resaltados)
+- [ ] **D.14** Email automático de renovación (SES o SendGrid) — configurar desde este panel *(backlog)*
 
 ---
 
