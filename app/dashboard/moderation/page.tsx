@@ -4,7 +4,9 @@ import api from '@/lib/api'
 import TableSkeleton from '@/components/TableSkeleton'
 import ErrorState from '@/components/ErrorState'
 import Toast from '@/components/Toast'
+import ModerationActionModal from '@/components/ModerationActionModal'
 import useToast from '@/hooks/useToast'
+import { useAdminRole } from '@/hooks/useAdminRole'
 
 interface Report {
   id: string
@@ -22,7 +24,14 @@ interface FoundUser {
   status: string
 }
 
+interface ActiveModal {
+  reportId: string
+  reportedUserId: string
+  reportedUserName: string
+}
+
 export default function ModerationPage() {
+  const role = useAdminRole()
   const [tab, setTab] = useState<'reports' | 'quick'>('reports')
   const [reports, setReports] = useState<Report[]>([])
   const [reportsTotal, setReportsTotal] = useState(0)
@@ -35,9 +44,7 @@ export default function ModerationPage() {
   const [searching, setSearching] = useState(false)
 
   // Modal
-  const [modal, setModal] = useState<{ reportId: string; action: string } | null>(null)
-  const [modalNote, setModalNote] = useState('')
-  const [acting, setActing] = useState(false)
+  const [activeModal, setActiveModal] = useState<ActiveModal | null>(null)
 
   const { toast, showSuccess, showError, hide } = useToast()
 
@@ -54,25 +61,6 @@ export default function ModerationPage() {
   }
 
   useEffect(() => { fetchReports() }, [])
-
-  const resolveReport = async () => {
-    if (!modal) return
-    setActing(true)
-    try {
-      await api.patch(`/admin/reports/${modal.reportId}`, {
-        action: modal.action,
-        note: modalNote,
-      })
-      showSuccess('Reporte resuelto')
-      setModal(null)
-      setModalNote('')
-      fetchReports()
-    } catch {
-      showError('Error al resolver reporte')
-    } finally {
-      setActing(false)
-    }
-  }
 
   const searchUser = () => {
     if (!searchEmail.trim()) return
@@ -96,13 +84,6 @@ export default function ModerationPage() {
     }
   }
 
-  const ACTION_LABELS: Record<string, string> = {
-    dismiss: 'Ignorar',
-    warn: 'Advertir',
-    ban_temp: 'Ban temporal',
-    ban_permanent: 'Ban permanente',
-  }
-
   const tabClass = (t: string) =>
     `px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
       tab === t
@@ -114,34 +95,17 @@ export default function ModerationPage() {
     <div className="p-8">
       <Toast message={toast.message} type={toast.type} visible={toast.visible} onClose={hide} />
 
-      {/* Modal */}
-      {modal && (
-        <div className="fixed inset-0 z-40 bg-black/60 flex items-center justify-center">
-          <div className="bg-[#1b212d] border border-[#252b3b] rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold text-white mb-4">
-              Confirmar: {ACTION_LABELS[modal.action]}
-            </h3>
-            <textarea
-              value={modalNote}
-              onChange={e => setModalNote(e.target.value)}
-              placeholder="Nota interna (opcional)..."
-              className="w-full px-4 py-3 rounded-xl bg-[#101622] border border-[#252b3b]
-                text-white text-sm placeholder-slate-500 focus:outline-none focus:border-[#0d59f2]
-                transition-colors resize-none h-24 mb-4"
-            />
-            <div className="flex justify-end gap-3">
-              <button onClick={() => { setModal(null); setModalNote('') }}
-                className="px-4 py-2 rounded-xl text-sm text-slate-400 hover:text-white transition-all">
-                Cancelar
-              </button>
-              <button onClick={resolveReport} disabled={acting}
-                className="px-4 py-2 rounded-xl bg-[#0d59f2] text-white text-sm font-semibold
-                  hover:bg-blue-600 disabled:opacity-50 transition-all">
-                {acting ? 'Procesando...' : 'Confirmar'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {activeModal && (
+        <ModerationActionModal
+          reportId={activeModal.reportId}
+          reportedUserId={activeModal.reportedUserId}
+          reportedUserName={activeModal.reportedUserName}
+          onClose={() => setActiveModal(null)}
+          onSuccess={() => {
+            showSuccess('Acción aplicada correctamente')
+            fetchReports()
+          }}
+        />
       )}
 
       <div className="mb-8">
@@ -180,7 +144,9 @@ export default function ModerationPage() {
                     <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Motivo</th>
                     <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
                     <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Estado</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Acciones</th>
+                    {role !== 'support' && (
+                      <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Acción</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -196,21 +162,21 @@ export default function ModerationPage() {
                           {r.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-1.5 flex-wrap">
-                          {['dismiss', 'warn', 'ban_temp', 'ban_permanent'].map(action => (
-                            <button
-                              key={action}
-                              onClick={() => setModal({ reportId: r.id, action })}
-                              className="px-2.5 py-1 rounded-lg bg-[#252b3b] text-slate-300
-                                text-xs font-medium hover:bg-[#0d59f2]/20 hover:text-[#0d59f2]
-                                transition-all"
-                            >
-                              {ACTION_LABELS[action]}
-                            </button>
-                          ))}
-                        </div>
-                      </td>
+                      {role !== 'support' && (
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => setActiveModal({
+                              reportId: r.id,
+                              reportedUserId: r.reported_user_id,
+                              reportedUserName: r.reported_user_id.slice(0, 8),
+                            })}
+                            className="px-3 py-1.5 rounded-lg bg-[#0d59f2]/20 text-[#0d59f2]
+                              text-xs font-semibold hover:bg-[#0d59f2]/30 transition-all"
+                          >
+                            Tomar acción
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -249,7 +215,7 @@ export default function ModerationPage() {
                     <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase">Nombre</th>
                     <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase">Email</th>
                     <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase">Status</th>
-                    <th className="px-6 py-4"></th>
+                    {role !== 'support' && <th className="px-6 py-4"></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -264,31 +230,33 @@ export default function ModerationPage() {
                           'bg-red-500/10 text-red-400'
                         }`}>{u.status}</span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
-                          {u.status !== 'active' && (
-                            <button onClick={() => quickAction(u.id, 'active')}
-                              className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400
-                                text-xs font-semibold hover:bg-green-500/30 transition-all">
-                              Activar
-                            </button>
-                          )}
-                          {u.status !== 'suspended' && (
-                            <button onClick={() => quickAction(u.id, 'suspended')}
-                              className="px-3 py-1.5 rounded-lg bg-yellow-500/20 text-yellow-400
-                                text-xs font-semibold hover:bg-yellow-500/30 transition-all">
-                              Suspender
-                            </button>
-                          )}
-                          {u.status !== 'banned' && (
-                            <button onClick={() => quickAction(u.id, 'banned')}
-                              className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400
-                                text-xs font-semibold hover:bg-red-500/30 transition-all">
-                              Banear
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                      {role !== 'support' && (
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            {u.status !== 'active' && (
+                              <button onClick={() => quickAction(u.id, 'active')}
+                                className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400
+                                  text-xs font-semibold hover:bg-green-500/30 transition-all">
+                                Activar
+                              </button>
+                            )}
+                            {u.status !== 'suspended' && (
+                              <button onClick={() => quickAction(u.id, 'suspended')}
+                                className="px-3 py-1.5 rounded-lg bg-yellow-500/20 text-yellow-400
+                                  text-xs font-semibold hover:bg-yellow-500/30 transition-all">
+                                Suspender
+                              </button>
+                            )}
+                            {u.status !== 'banned' && (
+                              <button onClick={() => quickAction(u.id, 'banned')}
+                                className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400
+                                  text-xs font-semibold hover:bg-red-500/30 transition-all">
+                                Banear
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
