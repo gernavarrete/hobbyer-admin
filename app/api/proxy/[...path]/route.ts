@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND = 'http://54.207.88.46:8000'
+const BACKEND = 'https://api.hobbyer.club'
 
 type Context = { params: Promise<{ path: string[] }> }
 
