@@ -14,10 +14,11 @@ async function handler(req: NextRequest, ctx: Context) {
     const auth = req.headers.get('Authorization')
     if (auth) headers['Authorization'] = auth
 
-    const body =
-      req.method !== 'GET' && req.method !== 'HEAD'
-        ? await req.text()
-        : undefined
+    const hasBody = req.method !== 'GET' && req.method !== 'HEAD'
+    const body = hasBody ? await req.text() : undefined
+    if (hasBody) {
+      headers['Content-Type'] = req.headers.get('Content-Type') ?? 'application/json'
+    }
 
     const backendRes = await fetch(url, {
       method: req.method,

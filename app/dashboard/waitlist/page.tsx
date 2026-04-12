@@ -56,6 +56,11 @@ export default function WaitlistPage() {
     )
   }
 
+  const extractError = (err: unknown, fallback: string): string => {
+    const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+    return detail ?? fallback
+  }
+
   const inviteSelected = async () => {
     if (selected.size === 0) return
     setSending('selected')
@@ -64,8 +69,8 @@ export default function WaitlistPage() {
       showSuccess(`${res.data.invited} invitaciones enviadas`)
       setSelected(new Set())
       fetchData()
-    } catch {
-      showError('Error al enviar invitaciones')
+    } catch (err) {
+      showError(extractError(err, 'Error al enviar invitaciones'))
     } finally {
       setSending(null)
     }
@@ -77,8 +82,8 @@ export default function WaitlistPage() {
       await api.post('/admin/waitlist/invite', { ids: [id] })
       showSuccess('Invitación enviada')
       fetchData()
-    } catch {
-      showError('Error al enviar invitación')
+    } catch (err) {
+      showError(extractError(err, 'Error al enviar invitación'))
     } finally {
       setSending(null)
     }
@@ -90,8 +95,8 @@ export default function WaitlistPage() {
       const res = await api.post('/admin/waitlist/invite-all', {})
       showSuccess(`${res.data.invited} invitaciones enviadas`)
       fetchData()
-    } catch {
-      showError('Error al enviar invitaciones')
+    } catch (err) {
+      showError(extractError(err, 'Error al enviar invitaciones'))
     } finally {
       setSending(null)
     }
